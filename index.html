@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitBot — AI Fitness Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --dark: #111111;
+    --card: #181818;
+    --border: #2a2a2a;
+    --green: #00e676;
+    --green-dim: #00c853;
+    --green-glow: rgba(0,230,118,0.15);
+    --white: #f5f5f5;
+    --grey: #888;
+    --light: #cccccc;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.2rem 3rem;
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    color: var(--green);
+  }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a {
+    color: var(--grey);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--green); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: flex-start;
+    padding: 8rem 3rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 80% 50%, rgba(0,230,118,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 20% 80%, rgba(0,200,83,0.05) 0%, transparent 60%);
+  }
+
+  .hero-grid {
+    position: absolute; inset: 0; z-index: 0; opacity: 0.04;
+    background-image:
+      linear-gradient(var(--green) 1px, transparent 1px),
+      linear-gradient(90deg, var(--green) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  .hero-content { position: relative; z-index: 1; max-width: 750px; }
+
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--green-glow);
+    border: 1px solid rgba(0,230,118,0.3);
+    border-radius: 100px;
+    padding: 0.35rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--green);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.6s ease both;
+  }
+  .badge-dot {
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.4); }
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4rem, 10vw, 8rem);
+    line-height: 0.92;
+    letter-spacing: 2px;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+  h1 .accent { color: var(--green); }
+
+  .hero-sub {
+    font-size: 1.15rem;
+    color: var(--light);
+    line-height: 1.7;
+    max-width: 520px;
+    margin-bottom: 2.5rem;
+    font-weight: 300;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+
+  .hero-cta {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--green);
+    color: var(--black);
+    padding: 0.85rem 2rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    letter-spacing: 0.3px;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover {
+    background: #33eb91;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,230,118,0.3);
+  }
+
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: transparent;
+    color: var(--white);
+    padding: 0.85rem 2rem;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover {
+    border-color: var(--green);
+    color: var(--green);
+    transform: translateY(-2px);
+  }
+
+  .hero-stats {
+    display: flex; gap: 3rem; margin-top: 4rem;
+    animation: fadeUp 0.6s 0.4s ease both;
+  }
+  .stat-item { display: flex; flex-direction: column; gap: 0.3rem; }
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.2rem;
+    color: var(--green);
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+  .stat-label { font-size: 0.8rem; color: var(--grey); letter-spacing: 0.5px; text-transform: uppercase; }
+
+  /* ── CHAT MOCKUP ── */
+  .hero-visual {
+    position: absolute;
+    right: 3rem; top: 50%; transform: translateY(-50%);
+    width: 300px;
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,230,118,0.1);
+    animation: fadeUp 0.8s 0.3s ease both;
+    z-index: 1;
+  }
+  .chat-header {
+    background: #1e1e1e;
+    padding: 0.9rem 1rem;
+    display: flex; align-items: center; gap: 0.7rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .chat-avatar {
+    width: 36px; height: 36px;
+    background: var(--green);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+  }
+  .chat-name { font-size: 0.9rem; font-weight: 600; }
+  .chat-status { font-size: 0.72rem; color: var(--green); }
+
+  .chat-body { padding: 1rem; display: flex; flex-direction: column; gap: 0.7rem; }
+
+  .msg {
+    padding: 0.6rem 0.85rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    max-width: 85%;
+    animation: msgIn 0.4s ease both;
+  }
+  .msg-user {
+    background: #2a2a2a;
+    align-self: flex-end;
+    border-bottom-right-radius: 3px;
+    color: var(--light);
+  }
+  .msg-bot {
+    background: rgba(0,230,118,0.12);
+    border: 1px solid rgba(0,230,118,0.2);
+    align-self: flex-start;
+    border-bottom-left-radius: 3px;
+    color: var(--white);
+  }
+  .msg:nth-child(1) { animation-delay: 0.8s; }
+  .msg:nth-child(2) { animation-delay: 1.2s; }
+  .msg:nth-child(3) { animation-delay: 1.6s; }
+  .msg:nth-child(4) { animation-delay: 2.0s; }
+
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── SECTIONS ── */
+  section { padding: 6rem 3rem; }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--green);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    letter-spacing: 2px;
+    line-height: 1;
+    margin-bottom: 1rem;
+  }
+  .section-desc {
+    color: var(--grey);
+    font-size: 1rem;
+    line-height: 1.7;
+    max-width: 520px;
+    margin-bottom: 3.5rem;
+  }
+
+  /* ── FEATURES ── */
+  #features { background: var(--dark); }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5px;
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .feature-card {
+    background: var(--card);
+    padding: 2rem;
+    transition: background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--green);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+  .feature-card:hover::before { transform: scaleX(1); }
+  .feature-card:hover { background: #1e1e1e; }
+
+  .feature-icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+  .feature-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 1px;
+    margin-bottom: 0.6rem;
+    color: var(--white);
+  }
+  .feature-desc {
+    font-size: 0.88rem;
+    color: var(--grey);
+    line-height: 1.65;
+  }
+  .feature-tag {
+    display: inline-block;
+    margin-top: 1rem;
+    background: var(--green-glow);
+    color: var(--green);
+    border: 1px solid rgba(0,230,118,0.2);
+    border-radius: 4px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.72rem;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── VIDEO ── */
+  #demo { background: var(--black); }
+
+  .video-wrapper {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    max-width: 800px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+  }
+  .video-bar {
+    background: #1e1e1e;
+    padding: 0.8rem 1.2rem;
+    display: flex; align-items: center; gap: 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .video-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .video-placeholder {
+    aspect-ratio: 16/9;
+    background: #111;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 1.2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .video-placeholder::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(0,230,118,0.05) 0%, transparent 70%);
+  }
+  .play-btn {
+    width: 72px; height: 72px;
+    background: var(--green);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative; z-index: 1;
+  }
+  .play-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 40px rgba(0,230,118,0.4);
+  }
+  .play-btn svg { margin-left: 4px; }
+  .video-label {
+    color: var(--grey);
+    font-size: 0.9rem;
+    position: relative; z-index: 1;
+  }
+  .video-note {
+    padding: 1rem 1.5rem;
+    font-size: 0.82rem;
+    color: var(--grey);
+    border-top: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── TECH STACK ── */
+  #tech { background: var(--dark); }
+
+  .tech-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+
+  .tech-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    transition: border-color 0.2s;
+  }
+  .tech-card:hover { border-color: rgba(0,230,118,0.3); }
+
+  .tech-card-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--green);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+  }
+  .tech-card h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 1px;
+    margin-bottom: 0.8rem;
+  }
+  .tech-card p {
+    font-size: 0.88rem;
+    color: var(--grey);
+    line-height: 1.7;
+  }
+
+  .stack-list {
+    display: flex; flex-direction: column; gap: 0.8rem;
+    margin-top: 1rem;
+  }
+  .stack-item {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 0.7rem 1rem;
+    background: #111;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .stack-item-left { display: flex; align-items: center; gap: 0.8rem; }
+  .stack-icon { font-size: 1.2rem; }
+  .stack-name { font-size: 0.9rem; font-weight: 500; }
+  .stack-role { font-size: 0.75rem; color: var(--grey); }
+  .stack-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--green);
+    background: var(--green-glow);
+    border: 1px solid rgba(0,230,118,0.2);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+  }
+
+  .prompt-block {
+    background: #111;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem;
+    margin-top: 1rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: #aaa;
+    line-height: 1.7;
+  }
+  .prompt-block .kw { color: var(--green); }
+  .prompt-block .str { color: #ffcc80; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--dark);
+    border-top: 1px solid var(--border);
+    padding: 2.5rem 3rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 2px;
+    color: var(--green);
+  }
+  .footer-text { font-size: 0.82rem; color: var(--grey); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .hero-visual { display: none; }
+    .tech-layout { grid-template-columns: 1fr; }
+    nav { padding: 1rem 1.5rem; }
+    section { padding: 4rem 1.5rem; }
+    .hero { padding: 7rem 1.5rem 3rem; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">FitBot</div>
+  <ul class="nav-links">
+    <li><a href="#hero">Home</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#demo">Demo</a></li>
+    <li><a href="#tech">Tech</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      AI-Powered Telegram Bot
+    </div>
+    <h1>YOUR<br><span class="accent">PERSONAL</span><br>FITNESS AI</h1>
+    <p class="hero-sub">
+      FitBot is a Telegram chatbot that tracks your calories, calculates your macros,
+      and runs a personalized 3-week bench press program — all powered by a large language model.
+      No app downloads. No subscriptions. Just message it.
+    </p>
+    <div class="hero-cta">
+      <a href="#features" class="btn-primary">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        See Features
+      </a>
+      <a href="#demo" class="btn-secondary">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Watch Demo
+      </a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <span class="stat-num">3</span>
+        <span class="stat-label">Week Program</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">2</span>
+        <span class="stat-label">Languages</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-num">100%</span>
+        <span class="stat-label">Free to Use</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat mockup -->
+  <div class="hero-visual">
+    <div class="chat-header">
+      <div class="chat-avatar">🤖</div>
+      <div>
+        <div class="chat-name">FitBot</div>
+        <div class="chat-status">● online</div>
+      </div>
+    </div>
+    <div class="chat-body">
+      <div class="msg msg-user">2 eggs and 150g chicken rice</div>
+      <div class="msg msg-bot">
+        🔥 Calories: ~520 kcal<br>
+        💪 Protein: ~48g<br>
+        🧈 Fat: ~14g<br>
+        🍞 Carbs: ~45g<br><br>
+        💡 Great post-workout meal!
+      </div>
+      <div class="msg msg-user">Show my bench workout</div>
+      <div class="msg msg-bot">
+        💪 Week 1 — Tuesday<br>
+        • 72 kg × 4 reps — 4 sets<br>
+        ⏱ Rest: 3–5 min<br>
+        💡 Leave 1–2 reps in tank
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-label">What it does</div>
+  <h2>EVERY FEATURE <span style="color:var(--green)">EXPLAINED</span></h2>
+  <p class="section-desc">FitBot combines an AI nutrition assistant with a structured strength program in one Telegram chat window.</p>
+
+  <div class="features-grid reveal">
+    <div class="feature-card">
+      <span class="feature-icon">🍽</span>
+      <div class="feature-title">Calorie & Macro Tracking</div>
+      <p class="feature-desc">Type what you ate in plain language — no templates, no barcodes. The AI understands "bowl of oatmeal with banana" and instantly returns calories, protein, fat, and carbs with a personalized tip.</p>
+      <span class="feature-tag">LLM-powered</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">📊</span>
+      <div class="feature-title">Daily Food Diary</div>
+      <p class="feature-desc">Every meal you log is stored in your personal diary. At any point you can view the full day's log with a running calorie total. Use /clear to reset it each morning.</p>
+      <span class="feature-tag">session storage</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🔥</span>
+      <div class="feature-title">Personalized Calorie Norm</div>
+      <p class="feature-desc">Based on your height, weight, age, and gender, FitBot calculates your Basal Metabolic Rate (Mifflin–St Jeor formula) and shows calorie targets for four activity levels — from sedentary to very active.</p>
+      <span class="feature-tag">BMR formula</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">💪</span>
+      <div class="feature-title">3-Week Bench Press Program</div>
+      <p class="feature-desc">Enter your one-rep max and FitBot calculates every weight for every session across three weeks: Week 1 builds volume, Week 2 adds intensity, Week 3 peaks with a max attempt day.</p>
+      <span class="feature-tag">% of 1RM</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">📅</span>
+      <div class="feature-title">Session-by-Session Navigation</div>
+      <p class="feature-desc">The bot tracks exactly which week and day you're on. Hit "Next" after each workout to advance the program automatically — Tuesday strength day, Saturday volume day, and so on.</p>
+      <span class="feature-tag">state tracking</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">👤</span>
+      <div class="feature-title">User Profile & BMI</div>
+      <p class="feature-desc">On first launch, FitBot collects your height, weight, age, gender, and bench max through a guided conversation. It stores this to personalize every calorie estimate and training recommendation.</p>
+      <span class="feature-tag">onboarding flow</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🇷🇺🇬🇧</span>
+      <div class="feature-title">Bilingual — RU & EN</div>
+      <p class="feature-desc">Switch between Russian and English with a single button tap. All menus, workout plans, calorie outputs, and AI responses adapt instantly to the selected language.</p>
+      <span class="feature-tag">i18n</span>
+    </div>
+    <div class="feature-card">
+      <span class="feature-icon">🤖</span>
+      <div class="feature-title">FitBot Persona</div>
+      <p class="feature-desc">The bot has a defined identity — it knows its name, its purpose, and its boundaries. Ask it about politics or movies and it politely redirects you back to fitness. Ask who made it and it answers honestly.</p>
+      <span class="feature-tag">prompt engineering</span>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section id="demo">
+  <div class="section-label">See it in action</div>
+  <h2>DEMO <span style="color:var(--green)">VIDEO</span></h2>
+  <p class="section-desc">A screencast of FitBot running live in Telegram — logging food, showing a workout, and switching languages in real time.</p>
+
+  <div class="video-wrapper reveal">
+    <div class="video-bar">
+      <div class="video-dot" style="background:#ff5f57"></div>
+      <div class="video-dot" style="background:#febc2e"></div>
+      <div class="video-dot" style="background:#28c840"></div>
+      <span style="font-size:0.78rem;color:var(--grey);margin-left:0.5rem;font-family:'DM Mono',monospace">fitbot_demo.mp4</span>
+    </div>
+    <video src="demo.mp4" controls width="100%" style="display:block;background:#000;"></video>
+  </div>
+
+  <div style="margin-top:2rem;padding:1.5rem;background:var(--card);border:1px solid var(--border);border-radius:10px;max-width:800px;" class="reveal">
+    <p style="font-size:0.85rem;color:var(--grey);line-height:1.8;">
+      <span style="color:var(--green);font-family:'DM Mono',monospace">// WHAT TO SHOW IN THE DEMO:</span><br>
+      1. Type a meal → AI responds with calories and macros<br>
+      2. Check the food diary to see the running total<br>
+      3. Ask for today's bench workout — bot shows sets and weights<br>
+      4. Switch language with the button — everything changes<br>
+      5. Ask "Who made you?" — FitBot answers in character
+    </p>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section id="tech">
+  <div class="section-label">Under the hood</div>
+  <h2>TECHNICAL <span style="color:var(--green)">OVERVIEW</span></h2>
+  <p class="section-desc">A breakdown of every technology choice, the model we used, and the prompt engineering decisions that shaped the bot's behaviour.</p>
+
+  <div class="tech-layout reveal">
+
+    <!-- Stack -->
+    <div>
+      <div class="tech-card">
+        <div class="tech-card-label">Libraries & Stack</div>
+        <h3>What We Built With</h3>
+        <div class="stack-list">
+          <div class="stack-item">
+            <div class="stack-item-left">
+              <span class="stack-icon">🐍</span>
+              <div>
+                <div class="stack-name">Python 3.12</div>
+                <div class="stack-role">Core language</div>
+              </div>
+            </div>
+            <span class="stack-badge">runtime</span>
+          </div>
+          <div class="stack-item">
+            <div class="stack-item-left">
+              <span class="stack-icon">✈️</span>
+              <div>
+                <div class="stack-name">python-telegram-bot</div>
+                <div class="stack-role">Telegram API wrapper</div>
+              </div>
+            </div>
+            <span class="stack-badge">v21</span>
+          </div>
+          <div class="stack-item">
+            <div class="stack-item-left">
+              <span class="stack-icon">⚡</span>
+              <div>
+                <div class="stack-name">Groq API</div>
+                <div class="stack-role">LLM inference</div>
+              </div>
+            </div>
+            <span class="stack-badge">free tier</span>
+          </div>
+          <div class="stack-item">
+            <div class="stack-item-left">
+              <span class="stack-icon">🧠</span>
+              <div>
+                <div class="stack-name">LLaMA 3.3 70B</div>
+                <div class="stack-role">Language model</div>
+              </div>
+            </div>
+            <span class="stack-badge">versatile</span>
+          </div>
+          <div class="stack-item">
+            <div class="stack-item-left">
+              <span class="stack-icon">🔑</span>
+              <div>
+                <div class="stack-name">python-dotenv</div>
+                <div class="stack-role">Secrets management</div>
+              </div>
+            </div>
+            <span class="stack-badge">env vars</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tech-card" style="margin-top:1.5rem">
+        <div class="tech-card-label">Database</div>
+        <h3>Storage Approach</h3>
+        <p>FitBot uses in-memory Python dictionaries (no external database) keyed by Telegram user ID. Each user's profile, diary, current week, and language preference is stored in a <code style="color:var(--green);font-family:'DM Mono',monospace">dict</code> that lives for the session. This keeps the MVP simple and stateless — a future version could persist data to SQLite or Redis.</p>
+      </div>
+    </div>
+
+    <!-- Model & Prompt -->
+    <div>
+      <div class="tech-card">
+        <div class="tech-card-label">Model Selection</div>
+        <h3>Why LLaMA 3.3 70B on Groq</h3>
+        <p style="margin-bottom:1rem">We chose <strong style="color:var(--white)">LLaMA 3.3 70B Versatile</strong> via Groq for three reasons:</p>
+        <p><strong style="color:var(--white)">1. Free tier.</strong> Groq provides generous free API access, making the project cost-zero for development and demonstration.</p><br>
+        <p><strong style="color:var(--white)">2. Speed.</strong> Groq's custom LPU hardware delivers very low latency — responses arrive in under a second, which feels natural for a Telegram chat interface.</p><br>
+        <p><strong style="color:var(--white)">3. Instruction following.</strong> The 70B model reliably adheres to strict output formats (the calorie breakdown template) without hallucinating extra text, which was critical for parsing the response back into the diary.</p>
+      </div>
+
+      <div class="tech-card" style="margin-top:1.5rem">
+        <div class="tech-card-label">Prompt Engineering</div>
+        <h3>Key Design Choices</h3>
+        <p style="margin-bottom:1rem;font-size:0.87rem;color:var(--grey)">Three deliberate decisions shaped how the bot responds:</p>
+
+        <div style="font-size:0.85rem;color:var(--light);line-height:1.8;margin-bottom:1rem">
+          <strong style="color:var(--white)">1. Strict format enforcement.</strong> The prompt instructs the model to reply <em>only</em> in the calorie breakdown template. This made it possible to parse the calorie number from the text and store it in the diary automatically.
+        </div>
+        <div style="font-size:0.85rem;color:var(--light);line-height:1.8;margin-bottom:1rem">
+          <strong style="color:var(--white)">2. Dynamic language injection.</strong> Instead of asking the model to detect language freely (unreliable), we inject the target language directly into the system prompt — <code style="color:var(--green);font-family:'DM Mono',monospace">Reply in English / Reply in Russian</code> — based on the user's stored preference. This eliminated mixed-language responses.
+        </div>
+        <div style="font-size:0.85rem;color:var(--light);line-height:1.8;margin-bottom:1rem">
+          <strong style="color:var(--white)">3. Profile context injection.</strong> Every calorie request includes the user's height, weight, age, gender, and bench max in the prompt. This allows the model to give a <em>personalized</em> tip rather than a generic one — for example, suggesting higher protein intake to someone with a heavy 1RM.
+        </div>
+        <div style="font-size:0.85rem;color:var(--light);line-height:1.8;">
+          <strong style="color:var(--white)">4. Identity & scope guardrails.</strong> The system prompt establishes a clear persona (FitBot) and limits the model to fitness topics only. Off-topic queries are intercepted before reaching the API where possible; the model handles edge cases.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">FitBot</div>
+  <div class="footer-text">Built with Python · Groq · LLaMA 3.3 · python-telegram-bot</div>
+  <div class="footer-text">Final Project — 2026</div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
